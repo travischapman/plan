@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Plan</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #faf7f4;
+    color: #3d3530;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 16px;
+    padding-bottom: 80px;
+  }
+  header {
+    text-align: center;
+    padding: 20px 0 12px;
+    border-bottom: 2px solid #e8ddd4;
+    margin-bottom: 20px;
+  }
+  header h1 {
+    font-size: 24px;
+    color: #6b4c3b;
+    margin-bottom: 4px;
+  }
+  .date-line {
+    font-size: 15px;
+    color: #8c7b6e;
+  }
+  .week-badge {
+    display: inline-block;
+    background: #6b4c3b;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-top: 8px;
+  }
+  .week-badge.taper { background: #c47f2c; }
+  .week-badge.race { background: #b94a3e; }
+  .week-badge.pre { background: #7a8c6e; }
+  section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  section h2 {
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b4c3b;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #ede6df;
+  }
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f5f0eb;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .check-item:last-child { border-bottom: none; }
+  .check-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: #6b4c3b;
+    cursor: pointer;
+  }
+  .check-item label {
+    font-size: 15px;
+    line-height: 1.4;
+    cursor: pointer;
+    flex: 1;
+  }
+  .check-item.checked label {
+    text-decoration: line-through;
+    opacity: 0.45;
+  }
+  .detail {
+    font-size: 13px;
+    color: #8c7b6e;
+    display: block;
+    margin-top: 2px;
+  }
+  .rest-message, .race-message, .done-message {
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 18px;
+    color: #6b4c3b;
+    line-height: 1.6;
+  }
+  .rest-message .emoji, .race-message .emoji, .done-message .emoji {
+    font-size: 40px;
+    display: block;
+    margin-bottom: 12px;
+  }
+  .motivational {
+    text-align: center;
+    font-style: italic;
+    color: #a08c7a;
+    font-size: 14px;
+    padding: 16px;
+    line-height: 1.5;
+  }
+  .priority-note {
+    background: #fef9f0;
+    border-left: 3px solid #c47f2c;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    color: #7a6548;
+    line-height: 1.4;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    body { background: #1a1715; color: #d4ccc5; }
+    header { border-bottom-color: #3a3330; }
+    header h1 { color: #c9a88a; }
+    .date-line { color: #9a8d82; }
+    section { background: #262220; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    section h2 { color: #c9a88a; border-bottom-color: #3a3330; }
+    .check-item { border-bottom-color: #302b27; }
+    .check-item label { color: #d4ccc5; }
+    .detail { color: #9a8d82; }
+    .check-item input[type="checkbox"] { accent-color: #c9a88a; }
+    .rest-message, .race-message, .done-message { color: #c9a88a; }
+    .motivational { color: #8a7d70; }
+    .priority-note { background: #2a2318; border-left-color: #c47f2c; color: #c9a88a; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>My Plan</h1>
+  <div class="date-line" id="dateLine"></div>
+  <div class="week-badge" id="weekBadge"></div>
+</header>
+
+<div id="content"></div>
+<div class="motivational" id="motivation"></div>
+
+<script>
+(function() {
+// ── Date helpers ──
+const params = new URLSearchParams(window.location.search);
+const today = params.has('date') ? new Date(params.get('date') + 'T12:00:00') : new Date();
+const PLAN_START = new Date('2026-04-06T00:00:00'); // Monday Week 1
+const RACE_DAY = new Date('2026-06-06T12:00:00');   // Saturday June 6, Week 9
+const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const dow = today.getDay(); // 0=Sun
+const dayName = dayNames[dow];
+const dateStr = `${dayName}, ${monthNames[today.getMonth()]} ${today.getDate()}`;
+
+function diffDays(a, b) {
+  const msDay = 86400000;
+  const aa = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+  const bb = new Date(b.getFullYear(), b.getMonth(), b.getDate());
+  return Math.floor((aa - bb) / msDay);
+}
+
+const daysFromStart = diffDays(today, PLAN_START);
+const weekNum = Math.floor(daysFromStart / 7) + 1;
+const isPrePlan = daysFromStart < 0;
+const isRaceDay = diffDays(today, RACE_DAY) === 0;
+const isPastRace = diffDays(today, RACE_DAY) > 0;
+const daysToRace = diffDays(RACE_DAY, today);
+
+// ── Plan data ──
+const weeklyRuns = {
+  1: { easy: '3 mi easy', moderate: '3 mi total: warm up, 4x2min tempo w/ 2min easy jog between, cool down', long: '4 mi' },
+  2: { easy: '3 mi easy', moderate: '3 mi total: warm up, 5x2min tempo w/ 2min easy jog between, cool down', long: '5 mi' },
+  3: { easy: '3 mi easy', moderate: '3 mi total: warm up, 3x3min tempo w/ 3min easy jog between, cool down', long: '6 mi' },
+  4: { easy: '3 mi easy', moderate: '3 mi easy (recovery week)', long: '4.5 mi' },
+  5: { easy: '3 mi easy', moderate: '3.5 mi total: warm up, 4x3min tempo w/ 3min easy jog between, cool down', long: '7 mi' },
+  6: { easy: '3 mi easy', moderate: '3.5 mi total: warm up, 3x5min tempo w/ 3min easy jog between, cool down', long: '8.5 mi' },
+  7: { easy: '3 mi easy', moderate: '3 mi easy (recovery week)', long: '6 mi' },
+  8: { easy: '3 mi easy', moderate: '3 mi total: warm up, 2x8min tempo w/ 4min easy jog between, cool down', long: '10 mi (peak week!)' },
+  9: { easy: '2 mi easy', moderate: '2 mi easy', long: 'RACE DAY: 13.1 mi' },
+};
+
+const nutritionHabits = {
+  1: { focus: 'Consistent Meal Timing', items: ['Eat breakfast, lunch, and dinner at roughly the same time today', 'Even if you\'re not super hungry, eat something at each meal'] },
+  2: { focus: 'Consistent Meal Timing', items: ['Eat breakfast, lunch, and dinner at roughly the same time today', 'Even if you\'re not super hungry, eat something at each meal'] },
+  3: { focus: 'Protein Anchor', items: ['Include a palm-sized protein source at every meal', 'Protein ideas: eggs, Greek yogurt, chicken, fish, beans, protein shake'] },
+  4: { focus: 'Protein Anchor', items: ['Include a palm-sized protein source at every meal', 'Protein ideas: eggs, Greek yogurt, chicken, fish, beans, protein shake'] },
+  5: { focus: 'Plate Method', items: ['Build each meal: 1/4 protein, 1/4 carbs/starch, 1/2 veggies or fruit', 'Carbs fuel your running \u2014 oats, rice, potatoes, bread, fruit are all good'] },
+  6: { focus: 'Plate Method', items: ['Build each meal: 1/4 protein, 1/4 carbs/starch, 1/2 veggies or fruit', 'Carbs fuel your running \u2014 oats, rice, potatoes, bread, fruit are all good'] },
+  7: { focus: 'Pre/Post Run Fueling', items: ['Before runs: eat something with carbs 60-90 min before (banana, toast + PB, oatmeal)', 'After runs: protein + carbs within 60 min (shake + fruit, or a real meal)'] },
+  8: { focus: 'Pre/Post Run Fueling', items: ['Before runs: eat something with carbs 60-90 min before (banana, toast + PB, oatmeal)', 'After runs: protein + carbs within 60 min (shake + fruit, or a real meal)'] },
+  9: { focus: 'Taper Week \u2014 Maintain All Habits', items: ['Keep eating consistently \u2014 3 meals, protein at each, plate method', 'Fuel well this week. Do not cut calories before race day.'] },
+};
+
+const motivationalQuotes = [
+  'You don\'t have to be perfect. You just have to keep showing up.',
+  'Every long run you finish is proof you can do hard things.',
+  'Progress is built one workout, one meal, one good night\'s sleep at a time.',
+  'The woman who started this plan would be proud of who you\'re becoming.',
+  'You are stronger than the voice that says you can\'t.',
+  'Consistency beats intensity. Just keep going.',
+  'The people who love you are watching you chase something hard. That matters.',
+  'Trust the process. The results are coming.',
+  'A bad day doesn\'t erase a good week. Keep perspective.',
+];
+
+// ── localStorage persistence ──
+const dateKey = `plan-${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+let checkedState = {};
+try { checkedState = JSON.parse(localStorage.getItem(dateKey)) || {}; } catch(e) {}
+function saveState() { localStorage.setItem(dateKey, JSON.stringify(checkedState)); }
+
+// ── Rendering ──
+const $content = document.getElementById('content');
+const $dateLine = document.getElementById('dateLine');
+const $weekBadge = document.getElementById('weekBadge');
+const $motivation = document.getElementById('motivation');
+
+$dateLine.textContent = dateStr;
+
+if (isPastRace && !isRaceDay) {
+  $weekBadge.textContent = 'Plan Complete';
+  $weekBadge.className = 'week-badge race';
+  $content.innerHTML = `<div class="done-message"><span class="emoji">\u{1F3C6}</span>You did it.<br>The plan is complete.<br><br>Take a breath. Be proud.<br>You showed up for 9 weeks and that changed you.</div>`;
+  return;
+}
+
+if (isRaceDay) {
+  $weekBadge.textContent = 'RACE DAY';
+  $weekBadge.className = 'week-badge race';
+  $content.innerHTML = `<div class="race-message"><span class="emoji">\u{1F3C3}\u200D\u2640\uFE0F</span><strong>Race Day \u2014 13.1 miles</strong><br><br>You trained for this. You are ready.<br><br><strong>Gold:</strong> Run the whole thing<br><strong>Silver:</strong> Run 10+ mi, walk breaks last 5K<br><strong>Bronze:</strong> Finish feeling strong<br><br>All three are victories.<br>The finish line is the party \u2014<br>the real work already happened.</div>`;
+  $motivation.textContent = 'This is your day. Enjoy every mile.';
+  return;
+}
+
+if (isPrePlan) {
+  $weekBadge.textContent = `Pre-Plan \u00b7 ${-daysFromStart} days to start`;
+  $weekBadge.className = 'week-badge pre';
+  renderPrePlan();
+} else if (weekNum >= 1 && weekNum <= 9) {
+  if (weekNum === 9) {
+    $weekBadge.textContent = `Week 9 \u00b7 Taper Week \u00b7 ${daysToRace} days to race`;
+    $weekBadge.className = 'week-badge taper';
+  } else {
+    $weekBadge.textContent = `Week ${weekNum} of 9 \u00b7 ${daysToRace} days to race`;
+  }
+  renderDay(weekNum);
+}
+
+$motivation.textContent = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+
+function renderPrePlan() {
+  const items = [
+    { id: 'pre-pt', label: 'Book PT evaluation with running gait analysis', detail: '~$200-300. Find a sports PT who works with runners. This is the #1 priority.' },
+    { id: 'pre-blood', label: 'Schedule bloodwork', detail: 'Call PCP or use direct-to-consumer lab. CBC, iron/ferritin, vitamin D, thyroid, CMP, RBC mag, B12, lipids.' },
+    { id: 'pre-dexa', label: 'Schedule DEXA scan', detail: 'Search "DEXA scan near me". ~$75-150. Gets your real body fat %.' },
+    { id: 'pre-run', label: '3-mile easy run baseline', detail: 'Note: pace per mile, avg heart rate, when/if pain starts, pain severity 1-10.' },
+    { id: 'pre-strength', label: 'Strength baselines at gym', detail: 'Single-leg glute bridge hold, side plank hold, plank hold, current working weights, squat form video.' },
+    { id: 'pre-food', label: '3-day food photo log', detail: 'Photo everything you eat for 2 weekdays + 1 weekend day. No counting, no judgment.' },
+    { id: 'pre-sleep', label: 'Set up sleep tracking', detail: 'Apple Watch, Fitbit, or iPhone Health app. Just start paying attention to hours + quality.' },
+    { id: 'pre-collagen', label: 'Get collagen peptides', detail: '15g/day with vitamin C. Any brand with "hydrolyzed collagen peptides". ~$25/month.' },
+  ];
+  $content.innerHTML = buildSection('Diagnostics \u2014 Get These Done Before Monday', items);
+  bindCheckboxes();
+}
+
+function renderDay(week) {
+  let html = '';
+  const runs = weeklyRuns[week];
+  const nutrition = nutritionHabits[week];
+  const isRunDay = dow === 2 || dow === 4 || dow === 6; // Tue, Thu, Sat
+  const isBiweekly = (week % 2 === 1) && dow === 0; // odd weeks on Sunday... actually let's do Saturday
+  const showProgressPhotos = (week % 2 === 0) && dow === 6; // even weeks on Saturday
+
+  // Sunday = rest day
+  if (dow === 0) {
+    html += `<div class="rest-message"><span class="emoji">\u{1F33F}</span><strong>Rest Day</strong><br><br>No training today. This is non-negotiable.<br>Recovery is where the progress actually happens.<br><br>Enjoy your family. Recharge.</div>`;
+    // Still show nutrition, supplements, mind & body on rest days
+    html += buildNutritionSection(week, nutrition);
+    html += buildSupplementsSection();
+    html += buildMindBodySection(false);
+    if (showProgressPhotos) {
+      html += buildSection('Progress Check (Biweekly)', [
+        { id: `w${week}-photo`, label: 'Take progress photos (front + side, same lighting)', detail: 'Compare to 2 weeks ago. You will see change.' },
+        { id: `w${week}-waist`, label: 'Measure waist with tape', detail: 'Same spot, same time of day. Track the trend, not any single number.' },
+      ]);
+    }
+    $content.innerHTML = html;
+    bindCheckboxes();
+    return;
+  }
+
+  // Workout section
+  if (dow === 1) { // Monday - upper body class + core
+    html += buildSection('Workout \u2014 Group Class: Upper Body + Core', [
+      { id: `w${week}-class`, label: 'Upper body group class', detail: 'Do the class as programmed' },
+      { id: `w${week}-aw`, label: 'Ab wheel rollout \u2014 3 x 8-10', detail: 'Full-chain core. Control the movement, don\'t collapse at the bottom.' },
+      { id: `w${week}-pp`, label: 'Pallof press \u2014 3 x 10 each side', detail: 'Anti-rotation core. Press out, hold 1 sec, return. Stay square.' },
+      { id: `w${week}-db`, label: 'Dead bug \u2014 2 x 8 each side', detail: 'Keep lower back pressed into floor the entire time.' },
+    ]);
+  } else if (dow === 2) { // Tuesday - easy run
+    html += buildSection(`Workout \u2014 Easy Run`, [
+      { id: `w${week}-erun`, label: `${runs.easy}`, detail: 'Conversational pace \u2014 you should be able to talk in full sentences. If you can\'t, slow down.' },
+      { id: `w${week}-epain`, label: 'Log any pain (location, severity 1-10, which mile)', detail: 'If pain escalates, walk. If it persists, stop. Do not push through joint pain.' },
+    ]);
+  } else if (dow === 3) { // Wednesday - lower body class + core
+    html += buildSection('Workout \u2014 Group Class: Lower Body + Core', [
+      { id: `w${week}-lclass`, label: 'Lower body group class', detail: 'Do the class as programmed' },
+      { id: `w${week}-sp`, label: 'Side plank with hip dip \u2014 3 x 10 each side', detail: 'Obliques + lateral hip stability. Key for running form.' },
+      { id: `w${week}-hkr`, label: 'Hanging knee raise (or lying leg raise) \u2014 3 x 12', detail: 'Rectus abdominis \u2014 the six-pack muscle. Controlled reps, no swinging.' },
+      { id: `w${week}-cp`, label: 'Copenhagen plank \u2014 2 x 8 each side', detail: 'Adductor strength \u2014 supports knee tracking while running.' },
+    ]);
+  } else if (dow === 4) { // Thursday - moderate run
+    html += buildSection(`Workout \u2014 Moderate Run`, [
+      { id: `w${week}-mrun`, label: `${runs.moderate}`, detail: 'Tempo = "comfortably hard" \u2014 short phrases OK, full sentences not. Jog easy between intervals.' },
+      { id: `w${week}-mpain`, label: 'Log any pain (location, severity 1-10, which mile)', detail: 'Legs may feel heavy from yesterday\'s lower body class. That\'s expected and actually useful.' },
+    ]);
+  } else if (dow === 5) { // Friday - targeted strength
+    html += buildSection('Workout \u2014 Targeted Strength: Prehab + Core', [
+      { id: `w${week}-ht`, label: 'Barbell hip thrust \u2014 3 x 10', detail: 'The most important exercise for your knee and IT band. Go heavy with good form.' },
+      { id: `w${week}-slrdl`, label: 'Single-leg RDL \u2014 3 x 8 each leg', detail: 'Balance + hamstring + glute. Note any difference between left and right.' },
+      { id: `w${week}-bss`, label: 'Bulgarian split squat \u2014 3 x 8 each leg', detail: 'Moderate weight \u2014 long run is tomorrow. Save some in the tank.' },
+      { id: `w${week}-pt`, label: 'PT corrective exercises (as prescribed)', detail: 'If you haven\'t seen the PT yet, skip this and add extra glute bridges instead.' },
+      { id: `w${week}-wl`, label: 'Walking lunge \u2014 2 x 10 each leg', detail: 'Dynamic single-leg stability.' },
+      { id: `w${week}-wp`, label: 'Weighted plank \u2014 3 x 30-45 sec', detail: 'Core endurance under load. Breathe.' },
+      { id: `w${week}-aw2`, label: 'Ab wheel rollout \u2014 3 x 8-10', detail: 'Second core hit this week.' },
+      { id: `w${week}-foam`, label: 'Foam rolling \u2014 10 min', detail: 'IT band, quads, hip flexors, calves. Prep for tomorrow\'s long run.' },
+    ]);
+  } else if (dow === 6) { // Saturday - long run (or race day on week 9)
+    // Week 9 Saturday is race day — handled by the isRaceDay check above
+    const title = `Workout \u2014 Long Run`;
+    const items = [
+      { id: `w${week}-lrun`, label: `Long run: ${runs.long}`, detail: 'Start easy and stay easy. The goal is distance, not speed. Walk breaks are allowed and smart.' },
+      { id: `w${week}-lpain`, label: 'Log any pain (location, severity 1-10, which mile)', detail: 'This data helps us adjust the plan. If pain hits early, we need to know.' },
+      { id: `w${week}-lfuel`, label: 'Eat a good pre-run meal 60-90 min before', detail: week >= 7 ? 'Practice your race-day meal. Figure out what sits well NOW, not on race day.' : 'Something with carbs: banana, toast + PB, oatmeal.' },
+    ];
+    html += buildSection(title, items);
+  }
+
+  // Week 9 Friday = day before race
+  if (dow === 5 && week === 9) {
+    html = ''; // override Friday strength workout with pre-race rest
+    html += buildSection('Workout \u2014 Day Before Race', [
+      { id: `w${week}-prerace`, label: 'Rest or very easy 15-min shakeout walk', detail: 'Stay off your feet. Hydrate. Eat well. Lay out your race gear tonight.' },
+      { id: `w${week}-gear`, label: 'Lay out race day clothes, shoes, bib, watch', detail: 'Everything ready so tomorrow morning is stress-free.' },
+      { id: `w${week}-meal`, label: 'Eat a familiar dinner with carbs', detail: 'Nothing new or experimental. Pasta, rice, potato \u2014 whatever you know sits well.' },
+    ]);
+  }
+
+  // Priority note for certain days
+  if (dow === 6 && week === 8) {
+    html += '<div class="priority-note">This is your peak long run \u2014 10 miles. The furthest you\'ll go before race day. You don\'t need to run 13.1 in training. Trust the plan.</div>';
+  }
+
+  // Nutrition
+  html += buildNutritionSection(week, nutrition);
+
+  // Supplements
+  html += buildSupplementsSection();
+
+  // Mind & Body
+  html += buildMindBodySection(isRunDay);
+
+  // Biweekly progress check on even-week Saturdays
+  if (showProgressPhotos) {
+    html += buildSection('Progress Check (Biweekly)', [
+      { id: `w${week}-photo`, label: 'Take progress photos (front + side, same lighting)', detail: 'Compare to 2 weeks ago. You will see change.' },
+      { id: `w${week}-waist`, label: 'Measure waist with tape', detail: 'Same spot, same time of day. Track the trend, not any single number.' },
+    ]);
+  }
+
+  $content.innerHTML = html;
+  bindCheckboxes();
+}
+
+function buildNutritionSection(week, nutrition) {
+  const items = [
+    { id: `w${week}-n-focus`, label: `This week\'s focus: ${nutrition.focus}`, detail: nutrition.items[0] },
+  ];
+  if (nutrition.items[1]) {
+    items.push({ id: `w${week}-n-focus2`, label: nutrition.items[1] });
+  }
+  items.push(
+    { id: `w${week}-n-meals`, label: 'Eat 3 meals today' },
+    { id: `w${week}-n-water`, label: 'Drink ~72 oz water', detail: 'Keep the water bottle visible. More on run days and hot days.' },
+  );
+  return buildSection('Nutrition', items);
+}
+
+function buildSupplementsSection() {
+  return buildSection('Supplements', [
+    { id: 'sup-collagen', label: 'Collagen peptides 15g', detail: 'With vitamin C, 30-60 min before exercise' },
+    { id: 'sup-protein', label: 'Protein powder', detail: 'Post-workout or as a snack' },
+    { id: 'sup-creatine', label: 'Creatine 5g' },
+    { id: 'sup-fishoil', label: 'Fish oil (~2g EPA+DHA)', detail: 'Check the label \u2014 you may need 2-3 capsules' },
+    { id: 'sup-vitamind', label: 'Vitamin D', detail: 'Take with a meal that has fat in it' },
+    { id: 'sup-prenatal', label: 'Prenatal' },
+    { id: 'sup-mag', label: 'Magnesium', detail: 'Take at bedtime \u2014 helps with sleep quality' },
+  ]);
+}
+
+function buildMindBodySection(isRunDay) {
+  const items = [
+    { id: 'mb-breathe', label: '5-min physiological sigh breathing', detail: 'Double inhale through nose (breath + sip), long exhale through mouth. Repeat 5 min.' },
+    { id: 'mb-sleep', label: 'In bed 30 min earlier than your old bedtime', detail: 'No phone for 30 min before bed. Magnesium is already in the supplements list.' },
+    { id: 'mb-mood', label: 'Rate energy & mood 1-5 in phone notes', detail: 'Takes 10 seconds. Helps us see patterns over time.' },
+  ];
+  return buildSection('Mind & Body', items);
+}
+
+function buildSection(title, items) {
+  let html = `<section><h2>${title}</h2>`;
+  for (const item of items) {
+    const isChecked = checkedState[item.id] || false;
+    html += `<div class="check-item ${isChecked ? 'checked' : ''}" data-id="${item.id}">`;
+    html += `<input type="checkbox" id="${item.id}" ${isChecked ? 'checked' : ''}>`;
+    html += `<label for="${item.id}">${item.label}`;
+    if (item.detail) html += `<span class="detail">${item.detail}</span>`;
+    html += `</label></div>`;
+  }
+  html += `</section>`;
+  return html;
+}
+
+function bindCheckboxes() {
+  document.querySelectorAll('.check-item').forEach(el => {
+    el.addEventListener('click', e => {
+      if (e.target.tagName === 'INPUT') return; // let checkbox handle itself
+      const cb = el.querySelector('input[type="checkbox"]');
+      cb.checked = !cb.checked;
+      cb.dispatchEvent(new Event('change'));
+    });
+    const cb = el.querySelector('input[type="checkbox"]');
+    cb.addEventListener('change', () => {
+      const id = el.dataset.id;
+      checkedState[id] = cb.checked;
+      el.classList.toggle('checked', cb.checked);
+      saveState();
+    });
+  });
+}
+})();
+</script>
+</body>
+</html>
