@@ -26,10 +26,61 @@
     color: #6b4c3b;
     margin-bottom: 4px;
   }
+  .date-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+  .nav-btn {
+    background: none;
+    border: 1px solid #d4ccc5;
+    border-radius: 8px;
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    color: #6b4c3b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-btn:active { background: #ede6df; }
   .date-line {
     font-size: 15px;
     color: #8c7b6e;
+    min-width: 180px;
+    text-align: center;
   }
+  .today-link {
+    display: block;
+    font-size: 12px;
+    color: #6b4c3b;
+    text-decoration: underline;
+    cursor: pointer;
+    margin-top: 2px;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #8c7b6e;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  .jump-btn {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 10px 24px;
+    background: #6b4c3b;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .jump-btn:active { opacity: 0.8; }
   .week-badge {
     display: inline-block;
     background: #6b4c3b;
@@ -138,6 +189,11 @@
     .rest-message, .race-message, .done-message { color: #c9a88a; }
     .motivational { color: #8a7d70; }
     .priority-note { background: #2a2318; border-left-color: #c47f2c; color: #c9a88a; }
+    .nav-btn { border-color: #4a4340; color: #c9a88a; }
+    .nav-btn:active { background: #3a3330; }
+    .today-link { color: #c9a88a; }
+    .empty-state { color: #9a8d82; }
+    .jump-btn { background: #c9a88a; color: #1a1715; }
   }
 </style>
 </head>
@@ -145,7 +201,11 @@
 
 <header>
   <h1>My Plan</h1>
-  <div class="date-line" id="dateLine"></div>
+  <div class="date-nav" id="dateNav">
+    <button class="nav-btn" id="prevDay">&lsaquo;</button>
+    <div class="date-line" id="dateLine"></div>
+    <button class="nav-btn" id="nextDay">&rsaquo;</button>
+  </div>
   <div class="week-badge" id="weekBadge"></div>
 </header>
 
@@ -154,30 +214,16 @@
 
 <script>
 (function() {
-// ── Date helpers ──
-const params = new URLSearchParams(window.location.search);
-const today = params.has('date') ? new Date(params.get('date') + 'T12:00:00') : new Date();
-const PLAN_START = new Date('2026-04-06T00:00:00'); // Monday Week 1
-const RACE_DAY = new Date('2026-06-06T12:00:00');   // Saturday June 6, Week 9
+// ── Constants ──
+const PLAN_START = new Date('2026-04-06T12:00:00');
+const RACE_DAY = new Date('2026-06-06T12:00:00');
+const EARLIEST = new Date('2026-04-04T12:00:00'); // plan created
 const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const dow = today.getDay(); // 0=Sun
-const dayName = dayNames[dow];
-const dateStr = `${dayName}, ${monthNames[today.getMonth()]} ${today.getDate()}`;
 
-function diffDays(a, b) {
-  const msDay = 86400000;
-  const aa = new Date(a.getFullYear(), a.getMonth(), a.getDate());
-  const bb = new Date(b.getFullYear(), b.getMonth(), b.getDate());
-  return Math.floor((aa - bb) / msDay);
-}
-
-const daysFromStart = diffDays(today, PLAN_START);
-const weekNum = Math.floor(daysFromStart / 7) + 1;
-const isPrePlan = daysFromStart < 0;
-const isRaceDay = diffDays(today, RACE_DAY) === 0;
-const isPastRace = diffDays(today, RACE_DAY) > 0;
-const daysToRace = diffDays(RACE_DAY, today);
+const params = new URLSearchParams(window.location.search);
+const realToday = params.has('date') ? new Date(params.get('date') + 'T12:00:00') : new Date();
+let viewDate = new Date(realToday);
 
 // ── Plan data ──
 const weeklyRuns = {
@@ -216,52 +262,111 @@ const motivationalQuotes = [
   'A bad day doesn\'t erase a good week. Keep perspective.',
 ];
 
-// ── localStorage persistence ──
-const dateKey = `plan-${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
-let checkedState = {};
-try { checkedState = JSON.parse(localStorage.getItem(dateKey)) || {}; } catch(e) {}
-function saveState() { localStorage.setItem(dateKey, JSON.stringify(checkedState)); }
+// ── Helpers ──
+function diffDays(a, b) {
+  const aa = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+  const bb = new Date(b.getFullYear(), b.getMonth(), b.getDate());
+  return Math.floor((aa - bb) / 86400000);
+}
 
-// ── Rendering ──
+function sameDay(a, b) { return diffDays(a, b) === 0; }
+
+function addDays(d, n) {
+  const r = new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
+}
+
+function formatDate(d) {
+  return `${dayNames[d.getDay()]}, ${monthNames[d.getMonth()]} ${d.getDate()}`;
+}
+
+// ── DOM refs ──
 const $content = document.getElementById('content');
 const $dateLine = document.getElementById('dateLine');
 const $weekBadge = document.getElementById('weekBadge');
 const $motivation = document.getElementById('motivation');
 
-$dateLine.textContent = dateStr;
+// ── Navigation ──
+document.getElementById('prevDay').addEventListener('click', () => { viewDate = addDays(viewDate, -1); render(); });
+document.getElementById('nextDay').addEventListener('click', () => { viewDate = addDays(viewDate, 1); render(); });
 
-if (isPastRace && !isRaceDay) {
-  $weekBadge.textContent = 'Plan Complete';
-  $weekBadge.className = 'week-badge race';
-  $content.innerHTML = `<div class="done-message"><span class="emoji">\u{1F3C6}</span>You did it.<br>The plan is complete.<br><br>Take a breath. Be proud.<br>You showed up for 9 weeks and that changed you.</div>`;
-  return;
-}
+// ── Main render ──
+function render() {
+  const d = viewDate;
+  const dow = d.getDay();
+  const daysFromStart = diffDays(d, PLAN_START);
+  const weekNum = Math.floor(daysFromStart / 7) + 1;
+  const isPrePlan = daysFromStart < 0 && diffDays(d, EARLIEST) >= 0;
+  const isRaceDay = sameDay(d, RACE_DAY);
+  const isPastRace = diffDays(d, RACE_DAY) > 0;
+  const isBeforeEarliest = diffDays(d, EARLIEST) < 0;
+  const daysToRace = diffDays(RACE_DAY, d);
+  const isViewingToday = sameDay(d, realToday);
 
-if (isRaceDay) {
-  $weekBadge.textContent = 'RACE DAY';
-  $weekBadge.className = 'week-badge race';
-  $content.innerHTML = `<div class="race-message"><span class="emoji">\u{1F3C3}\u200D\u2640\uFE0F</span><strong>Race Day \u2014 13.1 miles</strong><br><br>You trained for this. You are ready.<br><br><strong>Gold:</strong> Run the whole thing<br><strong>Silver:</strong> Run 10+ mi, walk breaks last 5K<br><strong>Bronze:</strong> Finish feeling strong<br><br>All three are victories.<br>The finish line is the party \u2014<br>the real work already happened.</div>`;
-  $motivation.textContent = 'This is your day. Enjoy every mile.';
-  return;
-}
-
-if (isPrePlan) {
-  $weekBadge.textContent = `Pre-Plan \u00b7 ${-daysFromStart} days to start`;
-  $weekBadge.className = 'week-badge pre';
-  renderPrePlan();
-} else if (weekNum >= 1 && weekNum <= 9) {
-  if (weekNum === 9) {
-    $weekBadge.textContent = `Week 9 \u00b7 Taper Week \u00b7 ${daysToRace} days to race`;
-    $weekBadge.className = 'week-badge taper';
-  } else {
-    $weekBadge.textContent = `Week ${weekNum} of 9 \u00b7 ${daysToRace} days to race`;
+  // Date line + "Today" link
+  let dateHTML = formatDate(d);
+  if (!isViewingToday) {
+    dateHTML += `<span class="today-link" id="jumpToday">Back to today</span>`;
   }
-  renderDay(weekNum);
+  $dateLine.innerHTML = dateHTML;
+
+  // Rebind jump-to-today link
+  const jumpBtn = document.getElementById('jumpToday');
+  if (jumpBtn) jumpBtn.addEventListener('click', (e) => { e.stopPropagation(); viewDate = new Date(realToday); render(); });
+
+  // localStorage for this viewed date
+  const dateKey = `plan-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  let checkedState = {};
+  try { checkedState = JSON.parse(localStorage.getItem(dateKey)) || {}; } catch(e) {}
+  function saveState() { localStorage.setItem(dateKey, JSON.stringify(checkedState)); }
+
+  // ── Out of range: empty state ──
+  if (isBeforeEarliest || isPastRace) {
+    $weekBadge.textContent = '';
+    $weekBadge.className = 'week-badge';
+    const jumpTarget = isBeforeEarliest ? EARLIEST : RACE_DAY;
+    const jumpLabel = isBeforeEarliest ? 'Go to plan start' : 'Go to race day';
+    $content.innerHTML = `<div class="empty-state">Nothing here for this date.<br><button class="jump-btn" id="jumpRange">${jumpLabel}</button></div>`;
+    $motivation.textContent = '';
+    document.getElementById('jumpRange').addEventListener('click', () => { viewDate = new Date(jumpTarget); render(); });
+    return;
+  }
+
+  // ── Race day ──
+  if (isRaceDay) {
+    $weekBadge.textContent = 'RACE DAY';
+    $weekBadge.className = 'week-badge race';
+    $content.innerHTML = `<div class="race-message"><span class="emoji">\u{1F3C3}\u200D\u2640\uFE0F</span><strong>Race Day \u2014 13.1 miles</strong><br><br>You trained for this. You are ready.<br><br><strong>Gold:</strong> Run the whole thing<br><strong>Silver:</strong> Run 10+ mi, walk breaks last 5K<br><strong>Bronze:</strong> Finish feeling strong<br><br>All three are victories.<br>The finish line is the party \u2014<br>the real work already happened.</div>`;
+    $motivation.textContent = 'This is your day. Enjoy every mile.';
+    return;
+  }
+
+  // ── Pre-plan ──
+  if (isPrePlan) {
+    $weekBadge.textContent = `Pre-Plan \u00b7 ${-daysFromStart} days to start`;
+    $weekBadge.className = 'week-badge pre';
+    renderPrePlan(checkedState, saveState);
+    $motivation.textContent = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+    return;
+  }
+
+  // ── Plan weeks 1-9 ──
+  if (weekNum >= 1 && weekNum <= 9) {
+    if (weekNum === 9) {
+      $weekBadge.textContent = `Week 9 \u00b7 Taper Week \u00b7 ${daysToRace} days to race`;
+      $weekBadge.className = 'week-badge taper';
+    } else {
+      $weekBadge.textContent = `Week ${weekNum} of 9 \u00b7 ${daysToRace} days to race`;
+      $weekBadge.className = 'week-badge';
+    }
+    renderDay(weekNum, dow, checkedState, saveState);
+    $motivation.textContent = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+    return;
+  }
 }
 
-$motivation.textContent = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
-
-function renderPrePlan() {
+function renderPrePlan(checkedState, saveState) {
   const items = [
     { id: 'pre-pt', label: 'Book PT evaluation with running gait analysis', detail: '~$200-300. Find a sports PT who works with runners. This is the #1 priority.' },
     { id: 'pre-blood', label: 'Schedule bloodwork', detail: 'Call PCP or use direct-to-consumer lab. CBC, iron/ferritin, vitamin D, thyroid, CMP, RBC mag, B12, lipids.' },
@@ -272,62 +377,67 @@ function renderPrePlan() {
     { id: 'pre-sleep', label: 'Set up sleep tracking', detail: 'Apple Watch, Fitbit, or iPhone Health app. Just start paying attention to hours + quality.' },
     { id: 'pre-collagen', label: 'Get collagen peptides', detail: '15g/day with vitamin C. Any brand with "hydrolyzed collagen peptides". ~$25/month.' },
   ];
-  $content.innerHTML = buildSection('Diagnostics \u2014 Get These Done Before Monday', items);
-  bindCheckboxes();
+  $content.innerHTML = buildSection('Diagnostics \u2014 Get These Done Before Monday', items, checkedState);
+  bindCheckboxes(checkedState, saveState);
 }
 
-function renderDay(week) {
+function renderDay(week, dow, checkedState, saveState) {
   let html = '';
   const runs = weeklyRuns[week];
   const nutrition = nutritionHabits[week];
-  const isRunDay = dow === 2 || dow === 4 || dow === 6; // Tue, Thu, Sat
-  const isBiweekly = (week % 2 === 1) && dow === 0; // odd weeks on Sunday... actually let's do Saturday
-  const showProgressPhotos = (week % 2 === 0) && dow === 6; // even weeks on Saturday
+  const isRunDay = dow === 2 || dow === 4 || dow === 6;
+  const showProgressPhotos = (week % 2 === 0) && dow === 6;
 
   // Sunday = rest day
   if (dow === 0) {
     html += `<div class="rest-message"><span class="emoji">\u{1F33F}</span><strong>Rest Day</strong><br><br>No training today. This is non-negotiable.<br>Recovery is where the progress actually happens.<br><br>Enjoy your family. Recharge.</div>`;
-    // Still show nutrition, supplements, mind & body on rest days
-    html += buildNutritionSection(week, nutrition);
-    html += buildSupplementsSection();
-    html += buildMindBodySection(false);
+    html += buildNutritionSection(week, nutrition, checkedState);
+    html += buildSupplementsSection(checkedState);
+    html += buildMindBodySection(false, checkedState);
     if (showProgressPhotos) {
       html += buildSection('Progress Check (Biweekly)', [
         { id: `w${week}-photo`, label: 'Take progress photos (front + side, same lighting)', detail: 'Compare to 2 weeks ago. You will see change.' },
         { id: `w${week}-waist`, label: 'Measure waist with tape', detail: 'Same spot, same time of day. Track the trend, not any single number.' },
-      ]);
+      ], checkedState);
     }
     $content.innerHTML = html;
-    bindCheckboxes();
+    bindCheckboxes(checkedState, saveState);
     return;
   }
 
   // Workout section
-  if (dow === 1) { // Monday - upper body class + core
+  const S = checkedState; // shorthand for buildSection calls
+  if (dow === 1) {
     html += buildSection('Workout \u2014 Group Class: Upper Body + Core', [
       { id: `w${week}-class`, label: 'Upper body group class', detail: 'Do the class as programmed' },
       { id: `w${week}-aw`, label: 'Ab wheel rollout \u2014 3 x 8-10', detail: 'Full-chain core. Control the movement, don\'t collapse at the bottom.' },
       { id: `w${week}-pp`, label: 'Pallof press \u2014 3 x 10 each side', detail: 'Anti-rotation core. Press out, hold 1 sec, return. Stay square.' },
       { id: `w${week}-db`, label: 'Dead bug \u2014 2 x 8 each side', detail: 'Keep lower back pressed into floor the entire time.' },
-    ]);
-  } else if (dow === 2) { // Tuesday - easy run
-    html += buildSection(`Workout \u2014 Easy Run`, [
+    ], S);
+  } else if (dow === 2) {
+    html += buildSection('Workout \u2014 Easy Run', [
       { id: `w${week}-erun`, label: `${runs.easy}`, detail: 'Conversational pace \u2014 you should be able to talk in full sentences. If you can\'t, slow down.' },
       { id: `w${week}-epain`, label: 'Log any pain (location, severity 1-10, which mile)', detail: 'If pain escalates, walk. If it persists, stop. Do not push through joint pain.' },
-    ]);
-  } else if (dow === 3) { // Wednesday - lower body class + core
+    ], S);
+  } else if (dow === 3) {
     html += buildSection('Workout \u2014 Group Class: Lower Body + Core', [
       { id: `w${week}-lclass`, label: 'Lower body group class', detail: 'Do the class as programmed' },
       { id: `w${week}-sp`, label: 'Side plank with hip dip \u2014 3 x 10 each side', detail: 'Obliques + lateral hip stability. Key for running form.' },
       { id: `w${week}-hkr`, label: 'Hanging knee raise (or lying leg raise) \u2014 3 x 12', detail: 'Rectus abdominis \u2014 the six-pack muscle. Controlled reps, no swinging.' },
       { id: `w${week}-cp`, label: 'Copenhagen plank \u2014 2 x 8 each side', detail: 'Adductor strength \u2014 supports knee tracking while running.' },
-    ]);
-  } else if (dow === 4) { // Thursday - moderate run
-    html += buildSection(`Workout \u2014 Moderate Run`, [
+    ], S);
+  } else if (dow === 4) {
+    html += buildSection('Workout \u2014 Moderate Run', [
       { id: `w${week}-mrun`, label: `${runs.moderate}`, detail: 'Tempo = "comfortably hard" \u2014 short phrases OK, full sentences not. Jog easy between intervals.' },
       { id: `w${week}-mpain`, label: 'Log any pain (location, severity 1-10, which mile)', detail: 'Legs may feel heavy from yesterday\'s lower body class. That\'s expected and actually useful.' },
-    ]);
-  } else if (dow === 5) { // Friday - targeted strength
+    ], S);
+  } else if (dow === 5 && week === 9) {
+    html += buildSection('Workout \u2014 Day Before Race', [
+      { id: `w${week}-prerace`, label: 'Rest or very easy 15-min shakeout walk', detail: 'Stay off your feet. Hydrate. Eat well. Lay out your race gear tonight.' },
+      { id: `w${week}-gear`, label: 'Lay out race day clothes, shoes, bib, watch', detail: 'Everything ready so tomorrow morning is stress-free.' },
+      { id: `w${week}-meal`, label: 'Eat a familiar dinner with carbs', detail: 'Nothing new or experimental. Pasta, rice, potato \u2014 whatever you know sits well.' },
+    ], S);
+  } else if (dow === 5) {
     html += buildSection('Workout \u2014 Targeted Strength: Prehab + Core', [
       { id: `w${week}-ht`, label: 'Barbell hip thrust \u2014 3 x 10', detail: 'The most important exercise for your knee and IT band. Go heavy with good form.' },
       { id: `w${week}-slrdl`, label: 'Single-leg RDL \u2014 3 x 8 each leg', detail: 'Balance + hamstring + glute. Note any difference between left and right.' },
@@ -337,55 +447,35 @@ function renderDay(week) {
       { id: `w${week}-wp`, label: 'Weighted plank \u2014 3 x 30-45 sec', detail: 'Core endurance under load. Breathe.' },
       { id: `w${week}-aw2`, label: 'Ab wheel rollout \u2014 3 x 8-10', detail: 'Second core hit this week.' },
       { id: `w${week}-foam`, label: 'Foam rolling \u2014 10 min', detail: 'IT band, quads, hip flexors, calves. Prep for tomorrow\'s long run.' },
-    ]);
-  } else if (dow === 6) { // Saturday - long run (or race day on week 9)
-    // Week 9 Saturday is race day — handled by the isRaceDay check above
-    const title = `Workout \u2014 Long Run`;
-    const items = [
+    ], S);
+  } else if (dow === 6) {
+    html += buildSection('Workout \u2014 Long Run', [
       { id: `w${week}-lrun`, label: `Long run: ${runs.long}`, detail: 'Start easy and stay easy. The goal is distance, not speed. Walk breaks are allowed and smart.' },
       { id: `w${week}-lpain`, label: 'Log any pain (location, severity 1-10, which mile)', detail: 'This data helps us adjust the plan. If pain hits early, we need to know.' },
       { id: `w${week}-lfuel`, label: 'Eat a good pre-run meal 60-90 min before', detail: week >= 7 ? 'Practice your race-day meal. Figure out what sits well NOW, not on race day.' : 'Something with carbs: banana, toast + PB, oatmeal.' },
-    ];
-    html += buildSection(title, items);
+    ], S);
   }
 
-  // Week 9 Friday = day before race
-  if (dow === 5 && week === 9) {
-    html = ''; // override Friday strength workout with pre-race rest
-    html += buildSection('Workout \u2014 Day Before Race', [
-      { id: `w${week}-prerace`, label: 'Rest or very easy 15-min shakeout walk', detail: 'Stay off your feet. Hydrate. Eat well. Lay out your race gear tonight.' },
-      { id: `w${week}-gear`, label: 'Lay out race day clothes, shoes, bib, watch', detail: 'Everything ready so tomorrow morning is stress-free.' },
-      { id: `w${week}-meal`, label: 'Eat a familiar dinner with carbs', detail: 'Nothing new or experimental. Pasta, rice, potato \u2014 whatever you know sits well.' },
-    ]);
-  }
-
-  // Priority note for certain days
   if (dow === 6 && week === 8) {
     html += '<div class="priority-note">This is your peak long run \u2014 10 miles. The furthest you\'ll go before race day. You don\'t need to run 13.1 in training. Trust the plan.</div>';
   }
 
-  // Nutrition
-  html += buildNutritionSection(week, nutrition);
+  html += buildNutritionSection(week, nutrition, S);
+  html += buildSupplementsSection(S);
+  html += buildMindBodySection(isRunDay, S);
 
-  // Supplements
-  html += buildSupplementsSection();
-
-  // Mind & Body
-  html += buildMindBodySection(isRunDay);
-
-  // Biweekly progress check on even-week Saturdays
   if (showProgressPhotos) {
     html += buildSection('Progress Check (Biweekly)', [
       { id: `w${week}-photo`, label: 'Take progress photos (front + side, same lighting)', detail: 'Compare to 2 weeks ago. You will see change.' },
       { id: `w${week}-waist`, label: 'Measure waist with tape', detail: 'Same spot, same time of day. Track the trend, not any single number.' },
-    ]);
+    ], S);
   }
 
   $content.innerHTML = html;
-  bindCheckboxes();
+  bindCheckboxes(checkedState, saveState);
 }
 
-function buildNutritionSection(week, nutrition) {
+function buildNutritionSection(week, nutrition, S) {
   const items = [
     { id: `w${week}-n-focus`, label: `This week\'s focus: ${nutrition.focus}`, detail: nutrition.items[0] },
   ];
@@ -396,10 +486,10 @@ function buildNutritionSection(week, nutrition) {
     { id: `w${week}-n-meals`, label: 'Eat 3 meals today' },
     { id: `w${week}-n-water`, label: 'Drink ~72 oz water', detail: 'Keep the water bottle visible. More on run days and hot days.' },
   );
-  return buildSection('Nutrition', items);
+  return buildSection('Nutrition', items, S);
 }
 
-function buildSupplementsSection() {
+function buildSupplementsSection(S) {
   return buildSection('Supplements', [
     { id: 'sup-collagen', label: 'Collagen peptides 15g', detail: 'With vitamin C, 30-60 min before exercise' },
     { id: 'sup-protein', label: 'Protein powder', detail: 'Post-workout or as a snack' },
@@ -408,22 +498,22 @@ function buildSupplementsSection() {
     { id: 'sup-vitamind', label: 'Vitamin D', detail: 'Take with a meal that has fat in it' },
     { id: 'sup-prenatal', label: 'Prenatal' },
     { id: 'sup-mag', label: 'Magnesium', detail: 'Take at bedtime \u2014 helps with sleep quality' },
-  ]);
+  ], S);
 }
 
-function buildMindBodySection(isRunDay) {
+function buildMindBodySection(isRunDay, S) {
   const items = [
     { id: 'mb-breathe', label: '5-min physiological sigh breathing', detail: 'Double inhale through nose (breath + sip), long exhale through mouth. Repeat 5 min.' },
     { id: 'mb-sleep', label: 'In bed 30 min earlier than your old bedtime', detail: 'No phone for 30 min before bed. Magnesium is already in the supplements list.' },
     { id: 'mb-mood', label: 'Rate energy & mood 1-5 in phone notes', detail: 'Takes 10 seconds. Helps us see patterns over time.' },
   ];
-  return buildSection('Mind & Body', items);
+  return buildSection('Mind & Body', items, S);
 }
 
-function buildSection(title, items) {
+function buildSection(title, items, checkedState) {
   let html = `<section><h2>${title}</h2>`;
   for (const item of items) {
-    const isChecked = checkedState[item.id] || false;
+    const isChecked = (checkedState && checkedState[item.id]) || false;
     html += `<div class="check-item ${isChecked ? 'checked' : ''}" data-id="${item.id}">`;
     html += `<input type="checkbox" id="${item.id}" ${isChecked ? 'checked' : ''}>`;
     html += `<label for="${item.id}">${item.label}`;
@@ -434,10 +524,10 @@ function buildSection(title, items) {
   return html;
 }
 
-function bindCheckboxes() {
+function bindCheckboxes(checkedState, saveState) {
   document.querySelectorAll('.check-item').forEach(el => {
     el.addEventListener('click', e => {
-      if (e.target.tagName === 'INPUT') return; // let checkbox handle itself
+      if (e.target.tagName === 'INPUT') return;
       const cb = el.querySelector('input[type="checkbox"]');
       cb.checked = !cb.checked;
       cb.dispatchEvent(new Event('change'));
@@ -451,6 +541,9 @@ function bindCheckboxes() {
     });
   });
 }
+
+// Initial render
+render();
 })();
 </script>
 </body>
