@@ -1,550 +1,722 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Plan</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #faf7f4;
-    color: #3d3530;
-    max-width: 500px;
-    margin: 0 auto;
-    padding: 16px;
-    padding-bottom: 80px;
-  }
-  header {
-    text-align: center;
-    padding: 20px 0 12px;
-    border-bottom: 2px solid #e8ddd4;
-    margin-bottom: 20px;
-  }
-  header h1 {
-    font-size: 24px;
-    color: #6b4c3b;
-    margin-bottom: 4px;
-  }
-  .date-nav {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-  }
-  .nav-btn {
-    background: none;
-    border: 1px solid #d4ccc5;
-    border-radius: 8px;
-    font-size: 20px;
-    width: 36px;
-    height: 36px;
-    color: #6b4c3b;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .nav-btn:active { background: #ede6df; }
-  .date-line {
-    font-size: 15px;
-    color: #8c7b6e;
-    min-width: 180px;
-    text-align: center;
-  }
-  .today-link {
-    display: block;
-    font-size: 12px;
-    color: #6b4c3b;
-    text-decoration: underline;
-    cursor: pointer;
-    margin-top: 2px;
-  }
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: #8c7b6e;
-    font-size: 16px;
-    line-height: 1.6;
-  }
-  .jump-btn {
-    display: inline-block;
-    margin-top: 16px;
-    padding: 10px 24px;
-    background: #6b4c3b;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 15px;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .jump-btn:active { opacity: 0.8; }
-  .week-badge {
-    display: inline-block;
-    background: #6b4c3b;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 12px;
-    margin-top: 8px;
-  }
-  .week-badge.taper { background: #c47f2c; }
-  .week-badge.race { background: #b94a3e; }
-  .week-badge.pre { background: #7a8c6e; }
-  section {
-    background: #fff;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 14px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  }
-  section h2 {
-    font-size: 15px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #6b4c3b;
-    margin-bottom: 12px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid #ede6df;
-  }
-  .check-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid #f5f0eb;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .check-item:last-child { border-bottom: none; }
-  .check-item input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    margin-top: 2px;
-    flex-shrink: 0;
-    accent-color: #6b4c3b;
-    cursor: pointer;
-  }
-  .check-item label {
-    font-size: 15px;
-    line-height: 1.4;
-    cursor: pointer;
-    flex: 1;
-  }
-  .check-item.checked label {
-    text-decoration: line-through;
-    opacity: 0.45;
-  }
-  .detail {
-    font-size: 13px;
-    color: #8c7b6e;
-    display: block;
-    margin-top: 2px;
-  }
-  .rest-message, .race-message, .done-message {
-    text-align: center;
-    padding: 40px 20px;
-    font-size: 18px;
-    color: #6b4c3b;
-    line-height: 1.6;
-  }
-  .rest-message .emoji, .race-message .emoji, .done-message .emoji {
-    font-size: 40px;
-    display: block;
-    margin-bottom: 12px;
-  }
-  .motivational {
-    text-align: center;
-    font-style: italic;
-    color: #a08c7a;
-    font-size: 14px;
-    padding: 16px;
-    line-height: 1.5;
-  }
-  .priority-note {
-    background: #fef9f0;
-    border-left: 3px solid #c47f2c;
-    padding: 10px 12px;
-    margin-bottom: 14px;
-    border-radius: 0 8px 8px 0;
-    font-size: 13px;
-    color: #7a6548;
-    line-height: 1.4;
-  }
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daily Meal + Fitness Plan</title>
+  <style>
+    :root {
+      --ink: #172026;
+      --muted: #5c6870;
+      --line: #d8e0dc;
+      --paper: #fbfcf8;
+      --panel: #ffffff;
+      --soft: #eef4ef;
+      --sage: #6f8f72;
+      --teal: #2d7480;
+      --rose: #b65f58;
+      --gold: #b88935;
+    }
 
-  @media (prefers-color-scheme: dark) {
-    body { background: #1a1715; color: #d4ccc5; }
-    header { border-bottom-color: #3a3330; }
-    header h1 { color: #c9a88a; }
-    .date-line { color: #9a8d82; }
-    section { background: #262220; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-    section h2 { color: #c9a88a; border-bottom-color: #3a3330; }
-    .check-item { border-bottom-color: #302b27; }
-    .check-item label { color: #d4ccc5; }
-    .detail { color: #9a8d82; }
-    .check-item input[type="checkbox"] { accent-color: #c9a88a; }
-    .rest-message, .race-message, .done-message { color: #c9a88a; }
-    .motivational { color: #8a7d70; }
-    .priority-note { background: #2a2318; border-left-color: #c47f2c; color: #c9a88a; }
-    .nav-btn { border-color: #4a4340; color: #c9a88a; }
-    .nav-btn:active { background: #3a3330; }
-    .today-link { color: #c9a88a; }
-    .empty-state { color: #9a8d82; }
-    .jump-btn { background: #c9a88a; color: #1a1715; }
-  }
-</style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.42;
+    }
+
+    main {
+      width: min(100%, 900px);
+      margin: 0 auto;
+      padding: 16px 12px 44px;
+    }
+
+    header {
+      padding: 18px 0 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      letter-spacing: 0;
+      line-height: 1.1;
+    }
+
+    h1 {
+      max-width: 680px;
+      font-size: clamp(2rem, 8vw, 4rem);
+    }
+
+    h2 {
+      margin-bottom: 12px;
+      font-size: 1.35rem;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    p { margin: 0 0 10px; }
+
+    section {
+      padding: 20px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    ul, ol {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    li { margin: 6px 0; }
+
+    .lede {
+      max-width: 660px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 1.02rem;
+    }
+
+    .today-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .card, details {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .card { padding: 14px; }
+
+    .hero-card {
+      background: var(--soft);
+      border-color: #cbd9cd;
+    }
+
+    .targets {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .target {
+      min-height: 78px;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .target b {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 1.3rem;
+    }
+
+    .target span, .small {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .routine {
+      display: grid;
+      gap: 8px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 30px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .num {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      color: #fff;
+      background: var(--teal);
+      border-radius: 50%;
+      font-weight: 800;
+      font-size: 0.88rem;
+    }
+
+    .meal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .meal {
+      padding: 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .meal strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--teal);
+    }
+
+    .meal-option {
+      width: 100%;
+      margin: 0 0 8px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+      font: inherit;
+      text-align: left;
+    }
+
+    .meal-option[aria-pressed="true"] {
+      border-color: var(--teal);
+      background: #edf7f8;
+      box-shadow: inset 4px 0 0 var(--teal);
+    }
+
+    .meal-option b {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--teal);
+    }
+
+    .meal-option span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .totals {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 10px;
+      background: rgba(251, 252, 248, 0.94);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      backdrop-filter: blur(8px);
+    }
+
+    .total {
+      padding: 9px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .total b {
+      display: block;
+      font-size: 1.1rem;
+    }
+
+    .total span {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .done-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .done-list label {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 8px;
+      align-items: start;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--teal);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      padding: 4px 8px;
+      color: #fff;
+      background: var(--teal);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .chip:nth-child(2) { background: var(--sage); }
+    .chip:nth-child(3) { background: var(--gold); }
+    .chip:nth-child(4) { background: var(--rose); }
+
+    .swap-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .swap {
+      padding: 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .day-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .day {
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      gap: 10px;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .day b {
+      color: var(--teal);
+    }
+
+    details {
+      margin: 8px 0;
+      overflow: hidden;
+    }
+
+    summary {
+      padding: 14px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    details > div {
+      padding: 0 14px 14px;
+    }
+
+    table {
+      display: block;
+      width: 100%;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    tbody, thead, tr {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: #f4f7f4;
+      color: var(--muted);
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .note {
+      margin-top: 10px;
+      padding: 12px;
+      background: #fff8eb;
+      border: 1px solid #ead3a5;
+      border-radius: 8px;
+    }
+
+    @media (max-width: 720px) {
+      .today-grid, .meal-grid, .swap-grid { grid-template-columns: 1fr; }
+      .targets { grid-template-columns: repeat(2, 1fr); }
+      .totals { grid-template-columns: repeat(2, 1fr); }
+      th, td { font-size: 0.84rem; }
+    }
+
+    @media (max-width: 460px) {
+      main { padding: 14px 10px 40px; }
+      .targets { grid-template-columns: 1fr; }
+      .day { grid-template-columns: 1fr; }
+      table { overflow-x: auto; }
+      tbody, thead, tr { min-width: 620px; }
+    }
+  </style>
 </head>
 <body>
+  <main>
+    <header>
+      <h1>Daily Meal + Fitness Plan</h1>
+      <p class="lede">Open this, pick today's meals, move your body, and close it. The deeper details are here when needed, but the main job is simple: protein first, vegetables often, lift consistently, and keep the weekly trend moving.</p>
+    </header>
 
-<header>
-  <h1>My Plan</h1>
-  <div class="date-nav" id="dateNav">
-    <button class="nav-btn" id="prevDay">&lsaquo;</button>
-    <div class="date-line" id="dateLine"></div>
-    <button class="nav-btn" id="nextDay">&rsaquo;</button>
-  </div>
-  <div class="week-badge" id="weekBadge"></div>
-</header>
+    <section>
+      <h2>Today</h2>
+      <div class="today-grid">
+        <div class="card hero-card">
+          <h3>Daily targets</h3>
+          <div class="targets">
+            <div class="target"><b>1,600</b><span>calorie default</span></div>
+            <div class="target"><b>130g</b><span>protein goal</span></div>
+            <div class="target"><b>8k+</b><span>steps</span></div>
+            <div class="target"><b>1 lift</b><span>or 35-45 min walk</span></div>
+          </div>
+          <p class="small" style="margin-top:10px;">On hard leg days or long-activity days, use 1,700-1,800 calories by adding rice, potatoes, oats, fruit, or tortillas.</p>
+          <div class="done-list" aria-label="Daily checklist">
+            <label><input type="checkbox" data-check="protein"> <span>Protein plan chosen</span></label>
+            <label><input type="checkbox" data-check="movement"> <span>Lift or walk done</span></label>
+            <label><input type="checkbox" data-check="water"> <span>Water and vegetables handled</span></label>
+          </div>
+        </div>
 
-<div id="content"></div>
-<div class="motivational" id="motivation"></div>
+        <div class="routine">
+          <div class="step">
+            <span class="num">1</span>
+            <div><strong>Choose one meal from each box.</strong><br><span class="small">No new research, no new recipe hunt.</span></div>
+          </div>
+          <div class="step">
+            <span class="num">2</span>
+            <div><strong>Hit protein by dinner.</strong><br><span class="small">If short, add Greek yogurt or a shake.</span></div>
+          </div>
+          <div class="step">
+            <span class="num">3</span>
+            <div><strong>Do today's movement.</strong><br><span class="small">Lift if scheduled. Walk if life is packed.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-<script>
-(function() {
-// ── Constants ──
-const PLAN_START = new Date('2026-04-06T12:00:00');
-const RACE_DAY = new Date('2026-06-06T12:00:00');
-const EARLIEST = new Date('2026-04-04T12:00:00'); // plan created
-const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    <section>
+      <h2>Pick Today's Meals</h2>
+      <div class="totals" aria-live="polite">
+        <div class="total"><b id="total-calories">0</b><span>calories picked</span></div>
+        <div class="total"><b id="total-protein">0g</b><span>protein picked</span></div>
+        <div class="total"><b id="calorie-status">Pick meals</b><span>calorie range</span></div>
+        <div class="total"><b id="protein-status">Pick meals</b><span>protein target</span></div>
+      </div>
+      <div class="meal-grid">
+        <div class="meal">
+          <strong>Breakfast</strong>
+          <button class="meal-option" type="button" data-meal="breakfast" data-calories="420" data-protein="42" aria-pressed="false">
+            <b>Greek yogurt bowl</b>
+            <span>Greek yogurt, whey, berries, granola.</span>
+          </button>
+          <button class="meal-option" type="button" data-meal="breakfast" data-calories="390" data-protein="34" aria-pressed="false">
+            <b>Egg scramble</b>
+            <span>Egg whites, 1 whole egg, spinach, peppers, toast, berries.</span>
+          </button>
+          <button class="meal-option" type="button" data-meal="breakfast" data-calories="410" data-protein="36" aria-pressed="false">
+            <b>Overnight oats</b>
+            <span>Oats, whey, Greek yogurt, berries, cinnamon.</span>
+          </button>
+        </div>
+        <div class="meal">
+          <strong>Lunch</strong>
+          <button class="meal-option" type="button" data-meal="lunch" data-calories="480" data-protein="44" aria-pressed="false">
+            <b>Chicken burrito bowl</b>
+            <span>Chicken, rice, beans, fajita vegetables, salsa, lettuce.</span>
+          </button>
+          <button class="meal-option" type="button" data-meal="lunch" data-calories="440" data-protein="38" aria-pressed="false">
+            <b>Turkey avocado wrap</b>
+            <span>High-fiber tortilla, turkey, lettuce, tomato, mustard, avocado.</span>
+          </button>
+          <button class="meal-option" type="button" data-meal="lunch" data-calories="460" data-protein="42" aria-pressed="false">
+            <b>Big chicken salad</b>
+            <span>Chicken, greens, cucumber, tomatoes, feta, chickpeas, vinaigrette.</span>
+          </button>
+        </div>
+        <div class="meal">
+          <strong>Snack</strong>
+          <button class="meal-option" type="button" data-meal="snack" data-calories="220" data-protein="27" aria-pressed="false">
+            <b>Shake + fruit</b>
+            <span>Whey protein with a banana or apple.</span>
+          </button>
+          <button class="meal-option" type="button" data-meal="snack" data-calories="210" data-protein="24" aria-pressed="false">
+            <b>Cottage cheese + pineapple</b>
+            <span>Easy high-protein sweet snack.</span>
+          </button>
+          <button class="meal-option" type="button" data-meal="snack" data-calories="230" data-protein="20" aria-pressed="false">
+            <b>Protein bar</b>
+            <span>Use one with at least 18g protein.</span>
+          </button>
+        </div>
+        <div class="meal">
+          <strong>Dinner</strong>
+          <button class="meal-option" type="button" data-meal="dinner" data-calories="560" data-protein="46" aria-pressed="false">
+            <b>Turkey taco bowls</b>
+            <span>Lean turkey, tortillas or rice, peppers, avocado, salsa.</span>
+          </button>
+          <button class="meal-option" type="button" data-meal="dinner" data-calories="620" data-protein="43" aria-pressed="false">
+            <b>Salmon plate</b>
+            <span>Salmon, roasted potatoes, green beans, lemon yogurt sauce.</span>
+          </button>
+          <button class="meal-option" type="button" data-meal="dinner" data-calories="540" data-protein="48" aria-pressed="false">
+            <b>Chicken stir-fry</b>
+            <span>Chicken, frozen vegetables, rice, soy-ginger or teriyaki sauce.</span>
+          </button>
+        </div>
+      </div>
+      <div class="note"><strong>If the day gets messy:</strong> keep protein, vegetables, and calories close. The emergency meal is grilled chicken or turkey, a microwave rice cup, bagged salad, salsa or light dressing, and Greek yogurt.</div>
+    </section>
 
-const params = new URLSearchParams(window.location.search);
-const realToday = params.has('date') ? new Date(params.get('date') + 'T12:00:00') : new Date();
-let viewDate = new Date(realToday);
+    <section>
+      <h2>This Week's Rhythm</h2>
+      <div class="day-list">
+        <div class="day"><b>Monday</b><span>Lower body + core. Dinner: turkey tacos or taco bowls.</span></div>
+        <div class="day"><b>Tuesday</b><span>35-45 minute walk. Dinner: salmon, potatoes, green beans.</span></div>
+        <div class="day"><b>Wednesday</b><span>Upper body + core. Dinner: chicken pasta or meat sauce with salad.</span></div>
+        <div class="day"><b>Thursday</b><span>Steps and mobility. Dinner: chicken stir-fry over rice.</span></div>
+        <div class="day"><b>Friday</b><span>Lower body + short conditioning. Dinner: lean burger, baked fries, salad.</span></div>
+        <div class="day"><b>Saturday</b><span>Upper body + abs. Dinner: sheet-pan fajitas.</span></div>
+        <div class="day"><b>Sunday</b><span>Rest, family walk, grocery run, prep basics. Dinner: slow-cooker chicken chili.</span></div>
+      </div>
+    </section>
 
-// ── Plan data ──
-const weeklyRuns = {
-  1: { easy: '3 mi easy', moderate: '3 mi total: warm up, 4x2min tempo w/ 2min easy jog between, cool down', long: '4 mi' },
-  2: { easy: '3 mi easy', moderate: '3 mi total: warm up, 5x2min tempo w/ 2min easy jog between, cool down', long: '5 mi' },
-  3: { easy: '3 mi easy', moderate: '3 mi total: warm up, 3x3min tempo w/ 3min easy jog between, cool down', long: '6 mi' },
-  4: { easy: '3 mi easy', moderate: '3 mi easy (recovery week)', long: '4.5 mi' },
-  5: { easy: '3 mi easy', moderate: '3.5 mi total: warm up, 4x3min tempo w/ 3min easy jog between, cool down', long: '7 mi' },
-  6: { easy: '3 mi easy', moderate: '3.5 mi total: warm up, 3x5min tempo w/ 3min easy jog between, cool down', long: '8.5 mi' },
-  7: { easy: '3 mi easy', moderate: '3 mi easy (recovery week)', long: '6 mi' },
-  8: { easy: '3 mi easy', moderate: '3 mi total: warm up, 2x8min tempo w/ 4min easy jog between, cool down', long: '10 mi (peak week!)' },
-  9: { easy: '2 mi easy', moderate: '2 mi easy', long: 'RACE DAY: 13.1 mi' },
-};
+    <section>
+      <h2>Simple Swaps</h2>
+      <div class="swap-grid">
+        <div class="swap">
+          <h3>Need more food?</h3>
+          <p>Add vegetables, berries, a salad, or broth-based soup first.</p>
+        </div>
+        <div class="swap">
+          <h3>Need more protein?</h3>
+          <p>Add a shake, Greek yogurt, cottage cheese, tuna packet, chicken, or egg whites.</p>
+        </div>
+        <div class="swap">
+          <h3>Need fewer calories?</h3>
+          <p>Reduce oil, cheese, dressing, avocado, granola, fries, chips, or oversized starch portions.</p>
+        </div>
+      </div>
+    </section>
 
-const nutritionHabits = {
-  1: { focus: 'Consistent Meal Timing', items: ['Eat breakfast, lunch, and dinner at roughly the same time today', 'Even if you\'re not super hungry, eat something at each meal'] },
-  2: { focus: 'Consistent Meal Timing', items: ['Eat breakfast, lunch, and dinner at roughly the same time today', 'Even if you\'re not super hungry, eat something at each meal'] },
-  3: { focus: 'Protein Anchor', items: ['Include a palm-sized protein source at every meal', 'Protein ideas: eggs, Greek yogurt, chicken, fish, beans, protein shake'] },
-  4: { focus: 'Protein Anchor', items: ['Include a palm-sized protein source at every meal', 'Protein ideas: eggs, Greek yogurt, chicken, fish, beans, protein shake'] },
-  5: { focus: 'Plate Method', items: ['Build each meal: 1/4 protein, 1/4 carbs/starch, 1/2 veggies or fruit', 'Carbs fuel your running \u2014 oats, rice, potatoes, bread, fruit are all good'] },
-  6: { focus: 'Plate Method', items: ['Build each meal: 1/4 protein, 1/4 carbs/starch, 1/2 veggies or fruit', 'Carbs fuel your running \u2014 oats, rice, potatoes, bread, fruit are all good'] },
-  7: { focus: 'Pre/Post Run Fueling', items: ['Before runs: eat something with carbs 60-90 min before (banana, toast + PB, oatmeal)', 'After runs: protein + carbs within 60 min (shake + fruit, or a real meal)'] },
-  8: { focus: 'Pre/Post Run Fueling', items: ['Before runs: eat something with carbs 60-90 min before (banana, toast + PB, oatmeal)', 'After runs: protein + carbs within 60 min (shake + fruit, or a real meal)'] },
-  9: { focus: 'Taper Week \u2014 Maintain All Habits', items: ['Keep eating consistently \u2014 3 meals, protein at each, plate method', 'Fuel well this week. Do not cut calories before race day.'] },
-};
+    <section>
+      <h2>Eating Out</h2>
+      <div class="meal-grid">
+        <div class="meal">
+          <strong>Fast casual bowl</strong>
+          <p>Chicken, fajita vegetables, lettuce, salsa, 1/2 rice, beans. Skip queso and sour cream.</p>
+          <div class="chips"><span class="chip">500-650 cal</span><span class="chip">40-55g protein</span></div>
+        </div>
+        <div class="meal">
+          <strong>Grilled sandwich</strong>
+          <p>Grilled chicken sandwich or nuggets, fruit or salad, light dressing. Fries only if planned.</p>
+          <div class="chips"><span class="chip">400-600 cal</span><span class="chip">35-55g protein</span></div>
+        </div>
+        <div class="meal">
+          <strong>Mexican</strong>
+          <p>Chicken fajitas, beans, pico, 2 corn tortillas. Skip chips or count 12 chips as the starch.</p>
+          <div class="chips"><span class="chip">550-750 cal</span><span class="chip">40-55g protein</span></div>
+        </div>
+        <div class="meal">
+          <strong>Pizza night</strong>
+          <p>2 thin-crust slices plus salad or lean protein. Add a protein shake if dinner is low protein.</p>
+          <div class="chips"><span class="chip">600-800 cal</span><span class="chip">35-55g protein</span></div>
+        </div>
+      </div>
+    </section>
 
-const motivationalQuotes = [
-  'You don\'t have to be perfect. You just have to keep showing up.',
-  'Every long run you finish is proof you can do hard things.',
-  'Progress is built one workout, one meal, one good night\'s sleep at a time.',
-  'The woman who started this plan would be proud of who you\'re becoming.',
-  'You are stronger than the voice that says you can\'t.',
-  'Consistency beats intensity. Just keep going.',
-  'The people who love you are watching you chase something hard. That matters.',
-  'Trust the process. The results are coming.',
-  'A bad day doesn\'t erase a good week. Keep perspective.',
-];
+    <section>
+      <h2>Sunday Setup</h2>
+      <div class="today-grid">
+        <div class="card">
+          <h3>Buy once</h3>
+          <p><strong>Protein:</strong> chicken, lean turkey or beef, salmon, eggs, egg whites, Greek yogurt, cottage cheese, whey, tuna or deli turkey.</p>
+          <p><strong>Carbs:</strong> rice, potatoes, oats, tortillas, beans, fruit.</p>
+          <p><strong>Produce:</strong> greens, peppers, onions, cucumbers, tomatoes, carrots, green beans, frozen vegetables, frozen berries.</p>
+          <p><strong>Flavor:</strong> salsa, marinara, light dressings, soy or teriyaki, mustard, pickles, avocado cups.</p>
+        </div>
+        <div class="card">
+          <h3>Prep once</h3>
+          <ol>
+            <li>Cook chicken and lean turkey.</li>
+            <li>Make rice and roasted potatoes.</li>
+            <li>Wash and chop vegetables.</li>
+            <li>Prep 3 breakfasts.</li>
+            <li>Keep sauces portioned at 1-2 tbsp.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
 
-// ── Helpers ──
-function diffDays(a, b) {
-  const aa = new Date(a.getFullYear(), a.getMonth(), a.getDate());
-  const bb = new Date(b.getFullYear(), b.getMonth(), b.getDate());
-  return Math.floor((aa - bb) / 86400000);
-}
+    <section>
+      <h2>Progress Rules</h2>
+      <div class="card hero-card">
+        <p><strong>Expected pace:</strong> 0.3-1.0 lb/week. Use weekly averages, waist measurements, progress photos, and training performance to decide whether the plan is working.</p>
+        <p><strong>Every Sunday:</strong> compare the weekly average weight, waist, photos, strength, and energy.</p>
+        <p><strong>If nothing moves for 2 weeks:</strong> remove 100 calories or add 2,000 steps/day.</p>
+        <p><strong>If loss is too fast or workouts suffer:</strong> add 100-150 calories, especially carbs around training.</p>
+      </div>
+    </section>
 
-function sameDay(a, b) { return diffDays(a, b) === 0; }
+    <section>
+      <h2>Reference</h2>
+      <details>
+        <summary>Training details</summary>
+        <div>
+          <p><strong>Strength:</strong> 3 sets of 8-12 reps for most lifts. Stop with 1-3 reps left. Add weight when every set reaches the top of the range cleanly.</p>
+          <p><strong>Core:</strong> 3-4 days/week for 8-12 minutes. Use cable crunches, Pallof presses, dead bugs, side planks, hanging knee raises, or reverse crunches.</p>
+          <p><strong>Recovery:</strong> if sleep or stress is rough, keep the workout but remove one set per exercise.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Why these numbers</summary>
+        <div>
+          <p>The starting target of about 1,600 calories is designed as a moderate deficit for an active adult while leaving room to train, recover, and preserve lean mass.</p>
+          <p>Protein is set at 125-135g/day to support lean-mass retention during fat loss. The goal is not simply to get lighter; it is to get leaner while keeping or building muscle.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Health note</summary>
+        <div>
+          <p>This is general nutrition and fitness guidance, not medical care. Check with a clinician before starting a fat-loss phase if pregnant, breastfeeding, managing a history of disordered eating, dealing with metabolic or hormonal conditions, or taking medications affected by diet or exercise.</p>
+        </div>
+      </details>
+    </section>
+  </main>
+  <script>
+    const storageKey = "daily-meal-fitness-plan-v1";
+    const mealButtons = Array.from(document.querySelectorAll(".meal-option"));
+    const checks = Array.from(document.querySelectorAll("[data-check]"));
+    const totals = {
+      calories: document.getElementById("total-calories"),
+      protein: document.getElementById("total-protein"),
+      calorieStatus: document.getElementById("calorie-status"),
+      proteinStatus: document.getElementById("protein-status")
+    };
 
-function addDays(d, n) {
-  const r = new Date(d);
-  r.setDate(r.getDate() + n);
-  return r;
-}
-
-function formatDate(d) {
-  return `${dayNames[d.getDay()]}, ${monthNames[d.getMonth()]} ${d.getDate()}`;
-}
-
-// ── DOM refs ──
-const $content = document.getElementById('content');
-const $dateLine = document.getElementById('dateLine');
-const $weekBadge = document.getElementById('weekBadge');
-const $motivation = document.getElementById('motivation');
-
-// ── Navigation ──
-document.getElementById('prevDay').addEventListener('click', () => { viewDate = addDays(viewDate, -1); render(); });
-document.getElementById('nextDay').addEventListener('click', () => { viewDate = addDays(viewDate, 1); render(); });
-
-// ── Main render ──
-function render() {
-  const d = viewDate;
-  const dow = d.getDay();
-  const daysFromStart = diffDays(d, PLAN_START);
-  const weekNum = Math.floor(daysFromStart / 7) + 1;
-  const isPrePlan = daysFromStart < 0 && diffDays(d, EARLIEST) >= 0;
-  const isRaceDay = sameDay(d, RACE_DAY);
-  const isPastRace = diffDays(d, RACE_DAY) > 0;
-  const isBeforeEarliest = diffDays(d, EARLIEST) < 0;
-  const daysToRace = diffDays(RACE_DAY, d);
-  const isViewingToday = sameDay(d, realToday);
-
-  // Date line + "Today" link
-  let dateHTML = formatDate(d);
-  if (!isViewingToday) {
-    dateHTML += `<span class="today-link" id="jumpToday">Back to today</span>`;
-  }
-  $dateLine.innerHTML = dateHTML;
-
-  // Rebind jump-to-today link
-  const jumpBtn = document.getElementById('jumpToday');
-  if (jumpBtn) jumpBtn.addEventListener('click', (e) => { e.stopPropagation(); viewDate = new Date(realToday); render(); });
-
-  // localStorage for this viewed date
-  const dateKey = `plan-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-  let checkedState = {};
-  try { checkedState = JSON.parse(localStorage.getItem(dateKey)) || {}; } catch(e) {}
-  function saveState() { localStorage.setItem(dateKey, JSON.stringify(checkedState)); }
-
-  // ── Out of range: empty state ──
-  if (isBeforeEarliest || isPastRace) {
-    $weekBadge.textContent = '';
-    $weekBadge.className = 'week-badge';
-    const jumpTarget = isBeforeEarliest ? EARLIEST : RACE_DAY;
-    const jumpLabel = isBeforeEarliest ? 'Go to plan start' : 'Go to race day';
-    $content.innerHTML = `<div class="empty-state">Nothing here for this date.<br><button class="jump-btn" id="jumpRange">${jumpLabel}</button></div>`;
-    $motivation.textContent = '';
-    document.getElementById('jumpRange').addEventListener('click', () => { viewDate = new Date(jumpTarget); render(); });
-    return;
-  }
-
-  // ── Race day ──
-  if (isRaceDay) {
-    $weekBadge.textContent = 'RACE DAY';
-    $weekBadge.className = 'week-badge race';
-    $content.innerHTML = `<div class="race-message"><span class="emoji">\u{1F3C3}\u200D\u2640\uFE0F</span><strong>Race Day \u2014 13.1 miles</strong><br><br>You trained for this. You are ready.<br><br><strong>Gold:</strong> Run the whole thing<br><strong>Silver:</strong> Run 10+ mi, walk breaks last 5K<br><strong>Bronze:</strong> Finish feeling strong<br><br>All three are victories.<br>The finish line is the party \u2014<br>the real work already happened.</div>`;
-    $motivation.textContent = 'This is your day. Enjoy every mile.';
-    return;
-  }
-
-  // ── Pre-plan ──
-  if (isPrePlan) {
-    $weekBadge.textContent = `Pre-Plan \u00b7 ${-daysFromStart} days to start`;
-    $weekBadge.className = 'week-badge pre';
-    renderPrePlan(checkedState, saveState);
-    $motivation.textContent = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
-    return;
-  }
-
-  // ── Plan weeks 1-9 ──
-  if (weekNum >= 1 && weekNum <= 9) {
-    if (weekNum === 9) {
-      $weekBadge.textContent = `Week 9 \u00b7 Taper Week \u00b7 ${daysToRace} days to race`;
-      $weekBadge.className = 'week-badge taper';
-    } else {
-      $weekBadge.textContent = `Week ${weekNum} of 9 \u00b7 ${daysToRace} days to race`;
-      $weekBadge.className = 'week-badge';
+    function loadState() {
+      try {
+        if (!window.localStorage) return { meals: {}, checks: {} };
+        return JSON.parse(window.localStorage.getItem(storageKey)) || { meals: {}, checks: {} };
+      } catch {
+        return { meals: {}, checks: {} };
+      }
     }
-    renderDay(weekNum, dow, checkedState, saveState);
-    $motivation.textContent = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
-    return;
-  }
-}
 
-function renderPrePlan(checkedState, saveState) {
-  const items = [
-    { id: 'pre-pt', label: 'Book PT evaluation with running gait analysis', detail: '~$200-300. Find a sports PT who works with runners. This is the #1 priority.' },
-    { id: 'pre-blood', label: 'Schedule bloodwork', detail: 'Call PCP or use direct-to-consumer lab. CBC, iron/ferritin, vitamin D, thyroid, CMP, RBC mag, B12, lipids.' },
-    { id: 'pre-dexa', label: 'Schedule DEXA scan', detail: 'Search "DEXA scan near me". ~$75-150. Gets your real body fat %.' },
-    { id: 'pre-run', label: '3-mile easy run baseline', detail: 'Note: pace per mile, avg heart rate, when/if pain starts, pain severity 1-10.' },
-    { id: 'pre-strength', label: 'Strength baselines at gym', detail: 'Single-leg glute bridge hold, side plank hold, plank hold, current working weights, squat form video.' },
-    { id: 'pre-food', label: '3-day food photo log', detail: 'Photo everything you eat for 2 weekdays + 1 weekend day. No counting, no judgment.' },
-    { id: 'pre-sleep', label: 'Set up sleep tracking', detail: 'Apple Watch, Fitbit, or iPhone Health app. Just start paying attention to hours + quality.' },
-    { id: 'pre-collagen', label: 'Get collagen peptides', detail: '15g/day with vitamin C. Any brand with "hydrolyzed collagen peptides". ~$25/month.' },
-  ];
-  $content.innerHTML = buildSection('Diagnostics \u2014 Get These Done Before Monday', items, checkedState);
-  bindCheckboxes(checkedState, saveState);
-}
-
-function renderDay(week, dow, checkedState, saveState) {
-  let html = '';
-  const runs = weeklyRuns[week];
-  const nutrition = nutritionHabits[week];
-  const isRunDay = dow === 2 || dow === 4 || dow === 6;
-  const showProgressPhotos = (week % 2 === 0) && dow === 6;
-
-  // Sunday = rest day
-  if (dow === 0) {
-    html += `<div class="rest-message"><span class="emoji">\u{1F33F}</span><strong>Rest Day</strong><br><br>No training today. This is non-negotiable.<br>Recovery is where the progress actually happens.<br><br>Enjoy your family. Recharge.</div>`;
-    html += buildNutritionSection(week, nutrition, checkedState);
-    html += buildSupplementsSection(checkedState);
-    html += buildMindBodySection(false, checkedState);
-    if (showProgressPhotos) {
-      html += buildSection('Progress Check (Biweekly)', [
-        { id: `w${week}-photo`, label: 'Take progress photos (front + side, same lighting)', detail: 'Compare to 2 weeks ago. You will see change.' },
-        { id: `w${week}-waist`, label: 'Measure waist with tape', detail: 'Same spot, same time of day. Track the trend, not any single number.' },
-      ], checkedState);
+    function saveState(state) {
+      try {
+        if (window.localStorage) {
+          window.localStorage.setItem(storageKey, JSON.stringify(state));
+        }
+      } catch {
+        // The picker still works if storage is unavailable.
+      }
     }
-    $content.innerHTML = html;
-    bindCheckboxes(checkedState, saveState);
-    return;
-  }
 
-  // Workout section
-  const S = checkedState; // shorthand for buildSection calls
-  if (dow === 1) {
-    html += buildSection('Workout \u2014 Group Class: Upper Body + Core', [
-      { id: `w${week}-class`, label: 'Upper body group class', detail: 'Do the class as programmed' },
-      { id: `w${week}-aw`, label: 'Ab wheel rollout \u2014 3 x 8-10', detail: 'Full-chain core. Control the movement, don\'t collapse at the bottom.' },
-      { id: `w${week}-pp`, label: 'Pallof press \u2014 3 x 10 each side', detail: 'Anti-rotation core. Press out, hold 1 sec, return. Stay square.' },
-      { id: `w${week}-db`, label: 'Dead bug \u2014 2 x 8 each side', detail: 'Keep lower back pressed into floor the entire time.' },
-    ], S);
-  } else if (dow === 2) {
-    html += buildSection('Workout \u2014 Easy Run', [
-      { id: `w${week}-erun`, label: `${runs.easy}`, detail: 'Conversational pace \u2014 you should be able to talk in full sentences. If you can\'t, slow down.' },
-      { id: `w${week}-epain`, label: 'Log any pain (location, severity 1-10, which mile)', detail: 'If pain escalates, walk. If it persists, stop. Do not push through joint pain.' },
-    ], S);
-  } else if (dow === 3) {
-    html += buildSection('Workout \u2014 Group Class: Lower Body + Core', [
-      { id: `w${week}-lclass`, label: 'Lower body group class', detail: 'Do the class as programmed' },
-      { id: `w${week}-sp`, label: 'Side plank with hip dip \u2014 3 x 10 each side', detail: 'Obliques + lateral hip stability. Key for running form.' },
-      { id: `w${week}-hkr`, label: 'Hanging knee raise (or lying leg raise) \u2014 3 x 12', detail: 'Rectus abdominis \u2014 the six-pack muscle. Controlled reps, no swinging.' },
-      { id: `w${week}-cp`, label: 'Copenhagen plank \u2014 2 x 8 each side', detail: 'Adductor strength \u2014 supports knee tracking while running.' },
-    ], S);
-  } else if (dow === 4) {
-    html += buildSection('Workout \u2014 Moderate Run', [
-      { id: `w${week}-mrun`, label: `${runs.moderate}`, detail: 'Tempo = "comfortably hard" \u2014 short phrases OK, full sentences not. Jog easy between intervals.' },
-      { id: `w${week}-mpain`, label: 'Log any pain (location, severity 1-10, which mile)', detail: 'Legs may feel heavy from yesterday\'s lower body class. That\'s expected and actually useful.' },
-    ], S);
-  } else if (dow === 5 && week === 9) {
-    html += buildSection('Workout \u2014 Day Before Race', [
-      { id: `w${week}-prerace`, label: 'Rest or very easy 15-min shakeout walk', detail: 'Stay off your feet. Hydrate. Eat well. Lay out your race gear tonight.' },
-      { id: `w${week}-gear`, label: 'Lay out race day clothes, shoes, bib, watch', detail: 'Everything ready so tomorrow morning is stress-free.' },
-      { id: `w${week}-meal`, label: 'Eat a familiar dinner with carbs', detail: 'Nothing new or experimental. Pasta, rice, potato \u2014 whatever you know sits well.' },
-    ], S);
-  } else if (dow === 5) {
-    html += buildSection('Workout \u2014 Targeted Strength: Prehab + Core', [
-      { id: `w${week}-ht`, label: 'Barbell hip thrust \u2014 3 x 10', detail: 'The most important exercise for your knee and IT band. Go heavy with good form.' },
-      { id: `w${week}-slrdl`, label: 'Single-leg RDL \u2014 3 x 8 each leg', detail: 'Balance + hamstring + glute. Note any difference between left and right.' },
-      { id: `w${week}-bss`, label: 'Bulgarian split squat \u2014 3 x 8 each leg', detail: 'Moderate weight \u2014 long run is tomorrow. Save some in the tank.' },
-      { id: `w${week}-pt`, label: 'PT corrective exercises (as prescribed)', detail: 'If you haven\'t seen the PT yet, skip this and add extra glute bridges instead.' },
-      { id: `w${week}-wl`, label: 'Walking lunge \u2014 2 x 10 each leg', detail: 'Dynamic single-leg stability.' },
-      { id: `w${week}-wp`, label: 'Weighted plank \u2014 3 x 30-45 sec', detail: 'Core endurance under load. Breathe.' },
-      { id: `w${week}-aw2`, label: 'Ab wheel rollout \u2014 3 x 8-10', detail: 'Second core hit this week.' },
-      { id: `w${week}-foam`, label: 'Foam rolling \u2014 10 min', detail: 'IT band, quads, hip flexors, calves. Prep for tomorrow\'s long run.' },
-    ], S);
-  } else if (dow === 6) {
-    html += buildSection('Workout \u2014 Long Run', [
-      { id: `w${week}-lrun`, label: `Long run: ${runs.long}`, detail: 'Start easy and stay easy. The goal is distance, not speed. Walk breaks are allowed and smart.' },
-      { id: `w${week}-lpain`, label: 'Log any pain (location, severity 1-10, which mile)', detail: 'This data helps us adjust the plan. If pain hits early, we need to know.' },
-      { id: `w${week}-lfuel`, label: 'Eat a good pre-run meal 60-90 min before', detail: week >= 7 ? 'Practice your race-day meal. Figure out what sits well NOW, not on race day.' : 'Something with carbs: banana, toast + PB, oatmeal.' },
-    ], S);
-  }
+    function selectedMeals() {
+      return mealButtons.filter((button) => button.getAttribute("aria-pressed") === "true");
+    }
 
-  if (dow === 6 && week === 8) {
-    html += '<div class="priority-note">This is your peak long run \u2014 10 miles. The furthest you\'ll go before race day. You don\'t need to run 13.1 in training. Trust the plan.</div>';
-  }
+    function updateTotals() {
+      const selected = selectedMeals();
+      const calories = selected.reduce((sum, button) => sum + Number(button.dataset.calories), 0);
+      const protein = selected.reduce((sum, button) => sum + Number(button.dataset.protein), 0);
+      const mealsPicked = new Set(selected.map((button) => button.dataset.meal)).size;
 
-  html += buildNutritionSection(week, nutrition, S);
-  html += buildSupplementsSection(S);
-  html += buildMindBodySection(isRunDay, S);
+      totals.calories.textContent = calories.toLocaleString();
+      totals.protein.textContent = `${protein}g`;
+      totals.calorieStatus.textContent = calories === 0
+        ? "Pick meals"
+        : calories < 1550
+          ? "Add food"
+          : calories <= 1800
+            ? "On plan"
+            : "Trim fats";
+      totals.proteinStatus.textContent = protein === 0
+        ? "Pick meals"
+        : protein >= 125
+          ? "On plan"
+          : `${125 - protein}g short`;
 
-  if (showProgressPhotos) {
-    html += buildSection('Progress Check (Biweekly)', [
-      { id: `w${week}-photo`, label: 'Take progress photos (front + side, same lighting)', detail: 'Compare to 2 weeks ago. You will see change.' },
-      { id: `w${week}-waist`, label: 'Measure waist with tape', detail: 'Same spot, same time of day. Track the trend, not any single number.' },
-    ], S);
-  }
+      const proteinCheck = document.querySelector('[data-check="protein"]');
+      if (proteinCheck) {
+        proteinCheck.checked = mealsPicked === 4 && protein >= 125;
+      }
+    }
 
-  $content.innerHTML = html;
-  bindCheckboxes(checkedState, saveState);
-}
+    function currentState() {
+      const meals = {};
+      selectedMeals().forEach((button) => {
+        meals[button.dataset.meal] = button.querySelector("b").textContent;
+      });
+      const checkState = {};
+      checks.forEach((check) => {
+        checkState[check.dataset.check] = check.checked;
+      });
+      return { meals, checks: checkState };
+    }
 
-function buildNutritionSection(week, nutrition, S) {
-  const items = [
-    { id: `w${week}-n-focus`, label: `This week\'s focus: ${nutrition.focus}`, detail: nutrition.items[0] },
-  ];
-  if (nutrition.items[1]) {
-    items.push({ id: `w${week}-n-focus2`, label: nutrition.items[1] });
-  }
-  items.push(
-    { id: `w${week}-n-meals`, label: 'Eat 3 meals today' },
-    { id: `w${week}-n-water`, label: 'Drink ~72 oz water', detail: 'Keep the water bottle visible. More on run days and hot days.' },
-  );
-  return buildSection('Nutrition', items, S);
-}
+    function restoreState() {
+      const state = loadState();
+      mealButtons.forEach((button) => {
+        const selectedName = state.meals?.[button.dataset.meal];
+        const buttonName = button.querySelector("b").textContent;
+        button.setAttribute("aria-pressed", selectedName === buttonName ? "true" : "false");
+      });
+      checks.forEach((check) => {
+        check.checked = Boolean(state.checks?.[check.dataset.check]);
+      });
+      updateTotals();
+    }
 
-function buildSupplementsSection(S) {
-  return buildSection('Supplements', [
-    { id: 'sup-collagen', label: 'Collagen peptides 15g', detail: 'With vitamin C, 30-60 min before exercise' },
-    { id: 'sup-protein', label: 'Protein powder', detail: 'Post-workout or as a snack' },
-    { id: 'sup-creatine', label: 'Creatine 5g' },
-    { id: 'sup-fishoil', label: 'Fish oil (~2g EPA+DHA)', detail: 'Check the label \u2014 you may need 2-3 capsules' },
-    { id: 'sup-vitamind', label: 'Vitamin D', detail: 'Take with a meal that has fat in it' },
-    { id: 'sup-prenatal', label: 'Prenatal' },
-    { id: 'sup-mag', label: 'Magnesium', detail: 'Take at bedtime \u2014 helps with sleep quality' },
-  ], S);
-}
-
-function buildMindBodySection(isRunDay, S) {
-  const items = [
-    { id: 'mb-breathe', label: '5-min physiological sigh breathing', detail: 'Double inhale through nose (breath + sip), long exhale through mouth. Repeat 5 min.' },
-    { id: 'mb-sleep', label: 'In bed 30 min earlier than your old bedtime', detail: 'No phone for 30 min before bed. Magnesium is already in the supplements list.' },
-    { id: 'mb-mood', label: 'Rate energy & mood 1-5 in phone notes', detail: 'Takes 10 seconds. Helps us see patterns over time.' },
-  ];
-  return buildSection('Mind & Body', items, S);
-}
-
-function buildSection(title, items, checkedState) {
-  let html = `<section><h2>${title}</h2>`;
-  for (const item of items) {
-    const isChecked = (checkedState && checkedState[item.id]) || false;
-    html += `<div class="check-item ${isChecked ? 'checked' : ''}" data-id="${item.id}">`;
-    html += `<input type="checkbox" id="${item.id}" ${isChecked ? 'checked' : ''}>`;
-    html += `<label for="${item.id}">${item.label}`;
-    if (item.detail) html += `<span class="detail">${item.detail}</span>`;
-    html += `</label></div>`;
-  }
-  html += `</section>`;
-  return html;
-}
-
-function bindCheckboxes(checkedState, saveState) {
-  document.querySelectorAll('.check-item').forEach(el => {
-    el.addEventListener('click', e => {
-      if (e.target.tagName === 'INPUT') return;
-      const cb = el.querySelector('input[type="checkbox"]');
-      cb.checked = !cb.checked;
-      cb.dispatchEvent(new Event('change'));
+    mealButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        mealButtons
+          .filter((other) => other.dataset.meal === button.dataset.meal)
+          .forEach((other) => other.setAttribute("aria-pressed", "false"));
+        button.setAttribute("aria-pressed", "true");
+        updateTotals();
+        saveState(currentState());
+      });
     });
-    const cb = el.querySelector('input[type="checkbox"]');
-    cb.addEventListener('change', () => {
-      const id = el.dataset.id;
-      checkedState[id] = cb.checked;
-      el.classList.toggle('checked', cb.checked);
-      saveState();
-    });
-  });
-}
 
-// Initial render
-render();
-})();
-</script>
+    checks.forEach((check) => {
+      check.addEventListener("change", () => {
+        saveState(currentState());
+      });
+    });
+
+    restoreState();
+  </script>
 </body>
 </html>
